@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <include/lang.h>
 
 void error(char* what, char* code, int line) {
 	printf("In line %d - %s\n", line, code);
