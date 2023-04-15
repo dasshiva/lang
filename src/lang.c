@@ -16,11 +16,11 @@ static void RunFile(char* name) {
 	fseek(file, 0, SEEK_END);
 	long end = ftell(file);
 	fseek(file, 0, SEEK_SET);
-	char* buf = malloc(sizeof(char) * end + 1);
-	buf[end] = '\0';
+	char* buf = malloc(sizeof(char) * end);
 	fread(buf, end, sizeof(char), file);
 	fclose(file);
-	printf("%s", buf);
+	Lexer* lex = new_lexer(buf);
+	scan_tokens(lex);
 }
 
 int main(int argc, char *args[]) {

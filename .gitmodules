@@ -1,3 +1,6 @@
 [submodule "sds"]
 	path = sds
 	url = ./sds
+[submodule "c_arraylist"]
+	path = c_arraylist
+	url = https://github.com/marekweb/datastructs-c
