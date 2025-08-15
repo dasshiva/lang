@@ -12,6 +12,7 @@ int  LexSource(LexerContext* source, Token** ret);
 void PrintToken(Token* tok);
 void DestroyLexerCtx(LexerContext* ret);
 void DestroyToken(Token* tok);
+int  GetTokenType(Token* tok);
 
 enum TokenType {
 	TOKEN_EOF = 1,

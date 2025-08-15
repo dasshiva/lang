@@ -13,9 +13,12 @@ int main(int argc, const char* argv[]) {
 	Token* tok = NULL;
 	while (LexSource(ctx, &tok)) {
 		PrintToken(tok);
+		if (GetTokenType(tok) == TOKEN_EOF)
+			break;
 		DestroyToken(tok);
 	}
 
+	DestroyToken(tok);
 	DestroyLexerCtx(ctx);
 
 	return 0;

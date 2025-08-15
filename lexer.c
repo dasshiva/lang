@@ -107,3 +107,7 @@ void DestroyLexerCtx(LexerContext* ctx) {
 void DestroyToken(Token* tok) {
 	free(tok);
 }
+
+int GetTokenType(Token* tok) {
+	return tok->type;
+}
