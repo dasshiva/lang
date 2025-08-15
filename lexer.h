@@ -4,7 +4,10 @@
 struct Token;
 typedef struct Token Token;
 
-int  LexSource(FILE* source, Token* ret);
+struct LexerContext;
+typedef struct LexerContext LexerContext;
+
+int  LexSource(LexerContext* source, Token* ret);
 void PrintToken(Token* tok);
 
 #endif
