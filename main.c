@@ -4,17 +4,19 @@
 #include "lexer.h"
 
 int main(int argc, const char* argv[]) {
-	FILE* file = fopen(argv[1], "r");
-	if (!file) {
-		printf("Error accessing source file\n");
+	LexerContext* ctx;
+	if(MakeLexerCtx(&ctx, argv[1]) < 0) {
+		printf("Failed to make lexer context\n");
 		return 1;
 	}
 
 	Token* tok = NULL;
-	while (LexSource(file, tok)) {
+	while (LexSource(ctx, &tok)) {
 		PrintToken(tok);
+		DestroyToken(tok);
 	}
 
-	fclose(file);
+	DestroyLexerCtx(ctx);
+
 	return 0;
 }

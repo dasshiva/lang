@@ -7,9 +7,10 @@ typedef struct Token Token;
 struct LexerContext;
 typedef struct LexerContext LexerContext;
 
-int  MakeLexerCtx(LexerContext* ret, const char* name);
-int  LexSource(LexerContext* source, Token* ret);
+int  MakeLexerCtx(LexerContext** ret, const char* name);
+int  LexSource(LexerContext* source, Token** ret);
 void PrintToken(Token* tok);
 void DestroyLexerCtx(LexerContext* ret);
+void DestroyToken(Token* tok);
 
 #endif
