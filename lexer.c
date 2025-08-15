@@ -3,6 +3,8 @@
 #include "lexer.h"
 #include "error.h"
 
+#define LEXER_EOF (1 << 0)
+
 struct Token {
 	int line;
 	int pos;
@@ -21,6 +23,7 @@ struct LexerContext {
 	int line;
 	int pos;
 	long flags;
+	Token* saved;
 };
 
 int MakeLexerCtx(LexerContext** ctx, const char* name) {
@@ -41,6 +44,7 @@ int MakeLexerCtx(LexerContext** ctx, const char* name) {
 	(*ctx)->line = 1;
 	(*ctx)->pos = 1;
 	(*ctx)->flags = 0;
+	(*ctx)->saved = NULL;
 	return OK;
 }
 
@@ -53,6 +57,31 @@ int LexSource(LexerContext* ctx, Token** ret) {
 		return EMEMALLOC;
 
 	Token* tok = *ret;
+	tok->file = ctx->fname;
+
+	if (ctx->flags & LEXER_EOF) {
+		tok->line = ctx->line;
+		tok->pos = ctx->pos;
+		tok->type = TOKEN_EOF;
+		return OK;
+	}
+
+	int c = 0;
+
+	while (1) {
+		c = fgetc(ctx->file);
+		if (c == EOF) {
+			// Return the last recognised token
+			// The lexer will only return to the caller if
+			// a) We hit EOF pack up your bags
+			// b) It reaches the beginning of the next token
+			// So this will never return the EOF token
+			// Only the if() above does
+			ctx->flags |= LEXER_EOF;
+			break;
+		}
+	}
+
 
 	return OK;
 }
