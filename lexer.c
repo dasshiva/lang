@@ -96,7 +96,18 @@ int LexSource(LexerContext* ctx, Token** ret) {
 		c = fgetc(ctx->file);
 		if (c > 127) {
 			// All files must be encoded in US-ASCII only
-			// LexerError();
+			// More formally only characters from iso646-1991 
+			// may be used. This prevents the lexer from being
+			// overly complex to deal with encodings like UTF-8
+			// allowing us to focus on other areas
+
+			// There is however the obvious disadvantage that
+			// users are forced to name all their program 
+			// entities using ASCII only restricting them from
+			// doing so in their native tongue
+			
+			LexerError();
+			// Won't return
 		}
 
 		if (c == EOF) {
