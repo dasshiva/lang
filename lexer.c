@@ -6,7 +6,10 @@
 // 1 '\t' is interpreted as this many spaces
 #define SPACES_PER_TAB (4)
 
-#define LEXER_EOF (1 << 0)
+#define LEXER_EOF       (1 << 0)
+#define LEXER_BLANK     (1 << 1)
+#define LEXER_IN_TOKEN  (1 << 2)
+#define LEXER_NEW_TOKEN (1 << 3)
 
 struct Token {
 	int line;
@@ -48,9 +51,29 @@ int MakeLexerCtx(LexerContext** ctx, const char* name) {
 	(*ctx)->fname = name;
 	(*ctx)->line = 1;
 	(*ctx)->pos = 1;
-	(*ctx)->flags = 0;
+	(*ctx)->flags |= LEXER_BLANK;
 	(*ctx)->saved = NULL;
 	return OK;
+}
+
+void SkipSpace(LexerContext* ctx) {
+	if (!ctx)
+		return;
+
+	int c = 0;
+
+	while (1) {
+		c = fgetc(ctx->file);
+		switch (c) {
+			case ' ': 
+			case '\r':
+			case '\f': ctx->pos += 1; break;
+			case '\t': ctx->pos += SPACES_PER_TAB; break;
+			case '\v': ctx->line += 1; break;
+			case '\n': ctx->line += 1; ctx->pos = 1; break;
+			default: ungetc(c, ctx->file); return;
+		}
+	}
 }
 
 // LexSource - Fetch the next token from the file or the
@@ -110,6 +133,12 @@ int LexSource(LexerContext* ctx, Token** ret) {
 			// Won't return
 		}
 
+		// If we are starting out, there can be spaces at the
+		// top of the document so skip them otherwise we are 
+		// already pointing to the next token
+		if (ctx->flags & LEXER_BLANK)
+			SkipSpace(ctx);
+
 		if (c == EOF) {
 			// Return the last recognised token
 			// The lexer will only return to the caller if
@@ -120,16 +149,8 @@ int LexSource(LexerContext* ctx, Token** ret) {
 			ctx->flags |= LEXER_EOF;
 			break;
 		}
-		
-		switch (c) {
-			case ' ': 
-			case '\r':
-			case '\f': ctx->pos += 1; continue;
-			case '\t': ctx->pos += SPACES_PER_TAB; continue;
-			case '\v': ctx->line += 1; continue;
-			case '\n': ctx->line += 1; ctx->pos = 1; continue;
-			default: {}
-		}
+
+
 	}
 
 
