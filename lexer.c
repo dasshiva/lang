@@ -3,6 +3,9 @@
 #include "lexer.h"
 #include "error.h"
 
+// 1 '\t' is interpreted as this many spaces
+#define SPACES_PER_TAB (4)
+
 #define LEXER_EOF (1 << 0)
 
 struct Token {
@@ -48,6 +51,25 @@ int MakeLexerCtx(LexerContext** ctx, const char* name) {
 	return OK;
 }
 
+// LexSource - Fetch the next token from the file or the
+// pushback buffer. If not fetching from the pushback buffer
+// also advance the file pointer to just behind the next 
+// possible token.
+//
+// We define a token to be anything other than EOF or any
+// whitespace character
+//
+// Parameters:
+// @ctx - The lexer context that we are currently using to fetch
+// tokens from
+// @ret - The buffer into which the new token will be returned
+// into (Must be non-null and should be freed with @DestroyToken
+// after use)
+// 
+// Returns:
+// OK - A token was succesfully fetched
+// EARGNULL - ctx and/or ret was NULL
+// EMEMALLOC - could not allocate memory for the token
 int LexSource(LexerContext* ctx, Token** ret) {
 	if (!ctx)
 		return EARGNULL;
@@ -79,6 +101,17 @@ int LexSource(LexerContext* ctx, Token** ret) {
 			// Only the if() above does
 			ctx->flags |= LEXER_EOF;
 			break;
+		}
+
+		
+		switch (c) {
+			case ' ': 
+			case '\r':
+			case '\f': ctx->pos += 1; continue;
+			case '\t': ctx->pos += SPACES_PER_TAB; continue;
+			case '\v': ctx->line += 1; continue;
+			case '\n': ctx->line += 1; ctx->pos = 1; continue;
+			default: {}
 		}
 	}
 
