@@ -10,6 +10,7 @@
 #define LEXER_BLANK     (1 << 1)
 #define LEXER_IN_TOKEN  (1 << 2)
 #define LEXER_NEW_TOKEN (1 << 3)
+#define LEXER_NEW_LINE  (1 << 4)
 
 struct Token {
 	int line;
@@ -28,6 +29,7 @@ struct LexerContext {
 	const char* fname;
 	int line;
 	int pos;
+	int prev;
 	long flags;
 	Token* saved;
 };
@@ -53,6 +55,7 @@ int MakeLexerCtx(LexerContext** ctx, const char* name) {
 	(*ctx)->pos = 1;
 	(*ctx)->flags |= LEXER_BLANK;
 	(*ctx)->saved = NULL;
+	(*ctx)->prev = 1;
 	return OK;
 }
 
@@ -70,10 +73,31 @@ void SkipSpace(LexerContext* ctx) {
 			case '\f': ctx->pos += 1; break;
 			case '\t': ctx->pos += SPACES_PER_TAB; break;
 			case '\v': ctx->line += 1; break;
-			case '\n': ctx->line += 1; ctx->pos = 1; break;
-			default: ungetc(c, ctx->file); return;
+			case '\n': {
+				ctx->line += 1; 
+				ctx->prev = ctx->pos;
+				ctx->pos = 1;
+				break;
+			}
+			default: {
+				if (ctx->pos == 1) {
+					ctx->pos = ctx->prev;
+					ctx->flags |= LEXER_NEW_LINE;
+					ctx->line -= 1;
+				}
+				else
+					ctx->pos -= 1;
+				ungetc(c, ctx->file); 
+				return;
+			}
 		}
 	}
+}
+
+int ReadAtom(LexerContext* ctx) {
+	int c = fgetc(ctx->file);
+	ctx->pos++;
+	return c;
 }
 
 // LexSource - Fetch the next token from the file or the
@@ -116,7 +140,16 @@ int LexSource(LexerContext* ctx, Token** ret) {
 	int c = 0;
 
 	while (1) {
-		c = fgetc(ctx->file);
+		// If we are starting out, there can be spaces at the
+		// top of the file so skip them otherwise we are 
+		// already pointing to the next token
+		if (ctx->flags & LEXER_BLANK) {
+			SkipSpace(ctx);
+			ctx->flags &= ~LEXER_BLANK;
+			continue;
+		}
+
+		c = ReadAtom(ctx);
 		if (c > 127) {
 			// All files must be encoded in US-ASCII only
 			// More formally only characters from iso646-1991 
@@ -132,23 +165,19 @@ int LexSource(LexerContext* ctx, Token** ret) {
 			LexerError();
 			// Won't return
 		}
-
-		// If we are starting out, there can be spaces at the
-		// top of the document so skip them otherwise we are 
-		// already pointing to the next token
-		if (ctx->flags & LEXER_BLANK)
-			SkipSpace(ctx);
-
+		
 		if (c == EOF) {
 			// Return the last recognised token
 			// The lexer will only return to the caller if
 			// a) We hit EOF pack up your bags
 			// b) It reaches the beginning of the next token
 			// So this will never return the EOF token
-			// Only the if() above does
+			// Only the if() outside the loop does
 			ctx->flags |= LEXER_EOF;
 			break;
 		}
+
+
 
 
 	}
