@@ -20,6 +20,5 @@ int main(int argc, const char* argv[]) {
 
 	DestroyToken(tok);
 	DestroyLexerCtx(ctx);
-
 	return 0;
 }

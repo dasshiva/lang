@@ -29,6 +29,8 @@ struct LexerContext {
 	Token* saved;
 };
 
+void LexerError();
+
 int MakeLexerCtx(LexerContext** ctx, const char* name) {
 	if (!name)
 		return EARGNULL;
@@ -92,6 +94,11 @@ int LexSource(LexerContext* ctx, Token** ret) {
 
 	while (1) {
 		c = fgetc(ctx->file);
+		if (c > 127) {
+			// All files must be encoded in US-ASCII only
+			// LexerError();
+		}
+
 		if (c == EOF) {
 			// Return the last recognised token
 			// The lexer will only return to the caller if
@@ -102,7 +109,6 @@ int LexSource(LexerContext* ctx, Token** ret) {
 			ctx->flags |= LEXER_EOF;
 			break;
 		}
-
 		
 		switch (c) {
 			case ' ': 
@@ -144,3 +150,8 @@ void DestroyToken(Token* tok) {
 int GetTokenType(Token* tok) {
 	return tok->type;
 }
+
+void LexerError() {
+	exit(1);
+}
+
